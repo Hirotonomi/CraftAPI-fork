@@ -22,7 +22,7 @@ class InstantAdapterTest {
     }
 
     @Test
-    void testReadin() {
+    void testReading() {
         Instant time = gson.fromJson("1519487280972", Instant.class);
         assertEquals(time, Instant.ofEpochMilli(1519487280972L));
     }
