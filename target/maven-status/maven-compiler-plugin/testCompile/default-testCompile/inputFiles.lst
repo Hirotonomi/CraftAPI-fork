@@ -1,0 +1,10 @@
+/app/projects/CraftAPI-fork_Hirotonomi/src/test/java/com/github/games647/craftapi/InstantAdapterTest.java
+/app/projects/CraftAPI-fork_Hirotonomi/src/test/java/com/github/games647/craftapi/NamePredicateTest.java
+/app/projects/CraftAPI-fork_Hirotonomi/src/test/java/com/github/games647/craftapi/UUIDAdapterTest.java
+/app/projects/CraftAPI-fork_Hirotonomi/src/test/java/com/github/games647/craftapi/cache/MemoryCacheTest.java
+/app/projects/CraftAPI-fork_Hirotonomi/src/test/java/com/github/games647/craftapi/model/skin/SkinPropertyTest.java
+/app/projects/CraftAPI-fork_Hirotonomi/src/test/java/com/github/games647/craftapi/model/skin/TextureTest.java
+/app/projects/CraftAPI-fork_Hirotonomi/src/test/java/com/github/games647/craftapi/resolver/AbstractResolverTest.java
+/app/projects/CraftAPI-fork_Hirotonomi/src/test/java/com/github/games647/craftapi/resolver/http/RotatingSourceFactoryTest.java
+/app/projects/CraftAPI-fork_Hirotonomi/src/test/java/com/github/games647/craftapi/resolver/ratelimiter/FakeTicker.java
+/app/projects/CraftAPI-fork_Hirotonomi/src/test/java/com/github/games647/craftapi/resolver/ratelimiter/TickingRateLimiterTest.java

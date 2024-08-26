@@ -1,60 +1,97 @@
 package com.github.games647.craftapi.resolver.http;
 
-import java.net.InetAddress;
-import java.net.Socket;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import javax.net.ssl.SSLSocketFactory;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.Socket;
+import java.util.Collections;
+import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
 class RotatingSourceFactoryTest {
 
-    private RotatingSourceFactory sslFactory;
+    @Mock
+    private SSLSocketFactory oldFactory;
+
+    @InjectMocks
+    private RotatingSourceFactory rotatingSourceFactory;
+
+    private InetAddress address1;
+    private InetAddress address2;
 
     @BeforeEach
-    void setUp() {
-        sslFactory = new RotatingSourceFactory();
+    void setUp() throws Exception {
+        address1 = InetAddress.getByName("192.168.1.1");
+        address2 = InetAddress.getByName("192.168.1.2");
     }
 
     @Test
-    void testDefault() throws Exception {
-        try (Socket socket = sslFactory.createSocket()) {
-            assertNotNull(socket.getLocalAddress());
-            assertTrue(socket.getLocalAddress().isAnyLocalAddress());
-        }
+    void testCreateSocket_noAddresses_defaultBehavior() throws IOException {
+        Socket socket = mock(Socket.class);
+        when(oldFactory.createSocket()).thenReturn(socket);
+
+        Socket createdSocket = rotatingSourceFactory.createSocket();
+
+        assertEquals(socket, createdSocket);
+        verify(oldFactory).createSocket();
     }
 
     @Test
-    void testRotating() throws Exception {
-        List<InetAddress> localAddresses = new ArrayList<>();
-        localAddresses.add(InetAddress.getByName("192.168.0.1"));
-        localAddresses.add(InetAddress.getByName("192.168.0.2"));
-        localAddresses.add(InetAddress.getByName("192.168.0.3"));
+    void testSetOutgoingAddresses_rotatesCorrectly() {
+        rotatingSourceFactory.setOutgoingAddresses(Collections.singleton(address1));
 
-        sslFactory.setOutgoingAddresses(localAddresses);
+        Optional<InetAddress> firstAddress = rotatingSourceFactory.getNextLocalAddress();
+        assertTrue(firstAddress.isPresent());
+        assertEquals(address1, firstAddress.get());
 
-        for (int i = 1; i <= 4; i++) {
-            Optional<InetAddress> localAddress = sslFactory.getNextLocalAddress();
-            assertTrue(localAddress.isPresent());
-            assertEquals(localAddress.get(), localAddresses.get((i - 1) % localAddresses.size()));
-        }
+        Optional<InetAddress> secondAddress = rotatingSourceFactory.getNextLocalAddress();
+        assertTrue(secondAddress.isPresent());
+        assertEquals(address1, secondAddress.get());
     }
 
     @Test
-    void testCollectionModification() throws Exception {
-        Collection<InetAddress> localAddresses = new ArrayList<>();
-        localAddresses.add(InetAddress.getByName("192.168.0.1"));
+    void testSetOutgoingAddresses_emptyCollection() {
+        rotatingSourceFactory.setOutgoingAddresses(Collections.emptySet());
 
-        sslFactory.setOutgoingAddresses(localAddresses);
-        localAddresses.clear();
+        Optional<InetAddress> address = rotatingSourceFactory.getNextLocalAddress();
+        assertFalse(address.isPresent());
+    }
 
-        assertTrue(sslFactory.getNextLocalAddress().isPresent());
+    @Test
+    void testCreateSocket_bindToNextAddress() throws IOException {
+        Socket socket = mock(Socket.class);
+        when(oldFactory.createSocket()).thenReturn(socket);
+        rotatingSourceFactory.setOutgoingAddresses(Collections.singletonList(address1));
+
+        Socket createdSocket = rotatingSourceFactory.createSocket();
+
+        verify(socket).bind(any());
+        assertEquals(socket, createdSocket);
+    }
+
+    @Test
+    void testGetDefaultCipherSuites_delegates() {
+        String[] cipherSuites = new String[]{"TLS_RSA_WITH_AES_128_CBC_SHA"};
+        when(oldFactory.getDefaultCipherSuites()).thenReturn(cipherSuites);
+
+        assertArrayEquals(cipherSuites, rotatingSourceFactory.getDefaultCipherSuites());
+    }
+
+    @Test
+    void testGetSupportedCipherSuites_delegates() {
+        String[] cipherSuites = new String[]{"TLS_RSA_WITH_AES_128_CBC_SHA"};
+        when(oldFactory.getSupportedCipherSuites()).thenReturn(cipherSuites);
+
+        assertArrayEquals(cipherSuites, rotatingSourceFactory.getSupportedCipherSuites());
     }
 }
